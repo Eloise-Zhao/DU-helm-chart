@@ -1,0 +1,51 @@
+RABBIT_MQ:
+    HOST: rabbitmq
+    PORT: 5672
+Multi:
+    threadNumber: 5
+    batchSize: 100
+    logBatchSize: 20
+
+redis_connection:
+  host: "10.255.11.62"
+  port: "6380"
+  password: redisDU123!
+  db: 11
+  timeout: 86400
+
+producer:
+    security_protocol: SSL
+    ssl_check_hostname: False
+    ssl_cafile: /root/firewall_automation/ssl/CARoot.pem
+    ssl_certfile: /root/firewall_automation/ssl/certificate.pem
+    ssl_keyfile: /root/firewall_automation/ssl/key.pem
+    acks: 1
+bootstrap_servers: meyclvspiapp01:9093,meyclvspiapp02:9093,meyclvspiapp03:9093
+consumer:
+    auto_offset_reset: earliest
+    security_protocol: SSL
+    ssl_check_hostname: False
+    ssl_cafile: /root/firewall_automation/ssl/CARoot.pem
+    ssl_certfile: /root/firewall_automation/ssl/certificate.pem
+    ssl_keyfile: /root/firewall_automation/ssl/key.pem
+    max_in_flight_requests_per_connection: 100
+    fetch_max_wait_ms: 5000
+    request_timeout_ms: 520000
+    max_poll_records: 5000
+    heartbeat_interval_ms: 10000
+    session_timeout_ms: 50000
+    api_version_auto_timeout_ms: 30000
+
+db_connection:
+    db_host: 10.255.11.59
+    db_port: 5432
+    db_username: postgres
+    db_password: postgresRon@ld07
+    db_name: du_fwa
+
+db_connection_pool:
+    pool_size: 2
+    max_overflow: 2
+
+secondary_subnets:
+    flag: False

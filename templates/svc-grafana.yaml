@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana-service
+spec:
+  selector:
+    app: grafana
+  type: {{ .Values.service.grafana.type }}
+  ports:
+  - port: {{ .Values.service.grafana.port }}
+    targetPort: 3000
+    protocol: TCP
+    nodePort: {{ .Values.service.grafana.nodePort }}

@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: uop
+spec:
+  replicas: 3
+  selector: 
+    matchLabels:
+      app: uop
+  template:
+    metadata:
+      labels:
+        app: uop
+    spec:
+      containers:
+      - name: uop
+        image: "{{ .Values.image.uop.repository }}:{{ .Values.image.uop.tag | default "latest" }}"
+        imagePullPolicy: {{ .Values.image.uop.pullPolicy }}
+        command: [ "/bin/sh", "-c", "/root/UOP-bgp-opt-portal/django/uopRun" ]
+        # command: [ "/bin/sh", "-c", "python3 manage.py runserver --settings=matrix_bgp.settings.uop 0.0.0.0:8080" ]
+        env:
+      {{- range .Values.env.celery }}
+        {{- with . }}
+        - name: {{ .name }}
+          value: {{ .value }}
+        {{- end}}
+      {{- end}}
+        volumeMounts:
+        - name: uop-config
+          mountPath: {{ .Values.Mounts.uop.uop_config.mountPath }}
+          subPath: {{ .Values.Mounts.uop.uop_config.subPath }}
+        - name: shared-data
+          mountPath: {{ .Values.Mounts.uop.shared_data.mountPath }}
+        - name: ssl
+          mountPath: {{ .Values.Mounts.uop.ssl.mountPath }}
+      volumes:
+      - name: uop-config
+        configMap:
+          name: uop-config
+          items:
+            - key: uop.py
+              path: uop.py
+      - name: shared-data
+        emptyDir: {}
+      - name: ssl
+        hostPath:
+          path: /opt/uop/ssl
+      hostAliases:
+      - ip: {{ .Values.hostAliases.uop_pg | quote }}
+        hostnames:
+        - "uop-pg"
+      - ip: {{ .Values.hostAliases.redis | quote }}
+        hostnames:
+        - "redis"
+      initContainers:
+      - name: datacontainer
+        image: "{{ .Values.image.uop.datacontainer.repository }}:{{ .Values.image.uop.datacontainer.tag | default "latest" }}"
+        imagePullPolicy: {{ .Values.image.uop.datacontainer.pullPolicy }}
+        command: [sh, -c]
+        args: ["cp -rp /src/* /data"]
+        volumeMounts:
+        - name: shared-data
+          mountPath: {{ .Values.Mounts.uop.datacontainer.shared_data.mountPath }}

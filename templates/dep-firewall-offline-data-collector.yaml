@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: firewall-offline-data-collector
+spec:
+  replicas: {{ .Values.replicaCount.firewall_collector }}
+  selector:
+    matchLabels:
+      app: firewall-offline-data-collector
+      release: stable
+  template:
+    metadata:
+      labels:
+        app: firewall-offline-data-collector
+        release: stable
+    spec:
+    {{- if .Values.nodeSelector.firewall.collector }}
+      nodeSelector:
+        kubernetes.io/hostname: {{ .Values.nodeSelector.firewall.collector }}
+    {{- end }}
+      containers:
+      - name: firewall-offline-data-collector-container
+        image: "{{ .Values.image.firewall.collector.repository }}:{{ .Values.image.firewall.collector.tag | default "latest" }}"
+        imagePullPolicy: {{ .Values.image.firewall.collector.pullPolicy }}
+        command: ["sh","/root/firewall_automation/deploy/entrypoint.sh"]
+        volumeMounts:
+        - name: shared-data
+          mountPath: {{ .Values.Mounts.firewall.collector.shared_data.mountPath }}
+          readOnly: false
+      volumes:
+      - name: hosts-file
+        configMap:
+          name: hosts-file-configmap
+          items:
+          - key: hosts
+            path: hosts
+      - name: configuration-yaml
+        configMap:
+          name: firewall-offline-data-collector-configmap
+          items:
+          - key: configuration.yaml
+            path: configuration.yaml
+      - name: ssl
+        hostPath:
+          path: /opt/fwa/ssl
+      - name: shared-data
+        emptyDir: {}
+      initContainers:
+      - name: datacontainer
+        image: "{{ .Values.image.firewall.collector.datacontainer.repository }}:{{ .Values.image.firewall.collector.datacontainer.tag | default "latest" }}"
+        command: [sh, -c]
+        args: ["cp -rp /root/firewall_automation/* /data"]
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - name: ssl
+          mountPath: {{ .Values.Mounts.firewall.collector.datacontainer.ssl.mountPath }}
+        - name: hosts-file
+          mountPath: {{ .Values.Mounts.firewall.collector.datacontainer.hosts_file.mountPath }}
+          subPath: {{ .Values.Mounts.firewall.collector.datacontainer.hosts_file.subPath }}
+        - name: configuration-yaml
+          mountPath: {{ .Values.Mounts.firewall.collector.datacontainer.configuration_yaml.mountPath }}
+          subPath: {{ .Values.Mounts.firewall.collector.datacontainer.configuration_yaml.subPath }}
+        - name: shared-data
+          mountPath: {{ .Values.Mounts.firewall.collector.datacontainer.shared_data.mountPath }}

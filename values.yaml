@@ -1,0 +1,209 @@
+replicaCount: 
+  celery: 1
+  firewall_api: 1
+  firewall_collector: 1
+  grafana: 1
+  rabbitmq: 3
+  uop: 3
+
+
+nodeSelector: 
+  firewall: 
+    api: meyclvspiapp03
+    collector: meyclvspiapp03
+
+
+image: 
+  celery: 
+    repository: containers.cisco.com/uop_dalian/uop-base
+    tag: "1.0"
+    pullPolicy: IfNotPresent
+    datacontainer: 
+      repository: containers.cisco.com/uop_dalian/uop-code
+      tag: "v0330"
+      pullPolicy: IfNotPresent
+  firewall: 
+    api: 
+      repository: dc-firewall-automation-api-env
+      tag: ""
+      pullPolicy: IfNotPresent
+      datacontainer:
+        repository: dc-firewall-automation-api-code
+        tag: "1.3"
+        pullPolicy: IfNotPresent
+    collector: 
+      repository: fw-collector
+      tag: "v1.0.1"
+      pullPolicy: IfNotPresent
+      datacontainer:
+        repository: fw-collector-code
+        tag: "v1"
+        pullPolicy: IfNotPresent
+    frontend: 
+      repository: containers.cisco.com/fw_automation/dc_fw_automation_web
+      tag: ""
+      pullPolicy: IfNotPresent
+  grafana: 
+    repository: containers.cisco.com/spis/grafana
+    tag: "du"
+    pullPolicy: IfNotPresent
+  rabbitmq: 
+    repository: rabbitmq
+    tag: "3.8.18"
+    pullPolicy: IfNotPresent
+  uop: 
+    repository: containers.cisco.com/uop_dalian/uop-base
+    tag: "1.0"
+    pullPolicy: IfNotPresent
+    datacontainer:
+        repository: containers.cisco.com/uop_dalian/uop-code
+        tag: "v0330"
+        pullPolicy: IfNotPresent
+
+
+service: 
+  celery: 
+    type: NodePort
+    port: 8080
+    nodePort: 30101
+  firewall: 
+    api: 
+      type: NodePort
+      port: 8000
+      nodePort: 32001
+      clusterIP: 10.233.10.1
+    frontend: 
+      port: 80
+  grafana: 
+    type: NodePort
+    port: 3000
+    nodePort: 30070
+  rabbitmq: 
+    http: 
+      port: 15672
+      type: NodePort
+    amqp: 
+      port: 5672
+    epmd: 
+      port: 4369
+    rabbitmq_dist:
+      port: 25672
+    clusterIP: None
+  uop: 
+    type: NodePort
+    port: 80
+    nodePort: 30100
+
+
+env: 
+  celery:
+  - name: DJANGO_SETTINGS_MODULE
+    value: matrix_bgp.settings.uop
+  - name: ETI_DJANGO_ROOT
+    value: /root/UOP-bgp-opt-portal/django
+  firewall: 
+    DB_NAME: "du_fwa"
+    DB_USER: "postgres"
+    DB_PASSWORD: "postgresRon@ld07"
+    DB_HOST: "10.255.11.59"
+    DB_PORT: "5432"
+    REDIS_HOST: "10.255.11.62"
+    REDIS_PORT: "6380"
+    REDIS_DB: '11'
+    REDIS_CACHE_DB: '10'
+    REDIS_PASSWORD: "675adeb37c58a29d7cc6c123b15c4602"
+    BROKER_URL: "amqp://guest:guest@rabbitmq-0.rabbitmq:5672/"
+    SPIS_HOST: 'http://10.255.11.61'
+    SPIS_BACKEND_PORT: '30091'
+    SPIS_FRONTEND_PORT: '30090'
+    MAIL_HOST: '172.22.36.15'
+    MAIL_USER: 'SV_Cisco.nso_DC'
+    MAIL_CALLBACK_ADDRESS: 'https://10.255.11.61'
+    MAIL_PASS: 'pL87Q:M?'
+    MAIL_POSTFIX: "du.ae"
+    SPIS_MENU_NAME_MAPPING: "{'REQUESTER_ACTION_LIST': '169', 'TSO_ACTION_LIST': '166', 'TSRM_ACTION_LIST': '167'}"
+  firewall_frontend: 
+    - name: API_PORT
+      value: "8000"
+    - name: API_HOST
+      value: "firewall-api-service"
+  rabbitmq: 
+    - name: RABBITMQ_ERLANG_COOKIE
+      value: "YZSDHWMFSMKEMBDHSGGZ"
+    - name: RABBITMQ_NODENAME
+      value: "rabbit@$(MY_POD_NAME)"
+  uop: 
+    - name: DJANGO_SETTINGS_MODULE
+      value: matrix_bgp.settings.uop
+    - name: ETI_DJANGO_ROOT
+      value: /root/UOP-bgp-opt-portal/django
+
+
+Mounts: 
+  celery: 
+    uop_config: 
+      mountPath: /root/UOP-bgp-opt-portal/django/matrix_bgp/settings/uop.py
+      subPath: uop.py
+    shared_data: 
+      mountPath: /root/UOP-bgp-opt-portal
+    ssl: 
+      mountPath: /root/UOP-bgp-opt-portal/django/ssl
+    datacontainer: 
+      shared_data:
+        mountPath: /data
+  firewall: 
+    api: 
+      ssl: 
+        mountPath: /root/firewall-automation/spis_firewall_automation/kafka_ssl
+      unilog: 
+        mountPath: /root/firewall-automation/spis_firewall_automation/logs
+      app_yaml_file: 
+        mountPath: /root/firewall-automation/spis_firewall_automation/app.yaml
+        subPath: app.yaml
+      hosts_file: 
+        mountPath: /root/firewall-automation/deploy/hosts
+        subPath: hosts
+      shared_data: 
+        mountPath: /root/firewall-automation
+      datacontainer:
+        shared_data:
+          mountPath: /data
+    collector: 
+      shared_data: 
+        mountPath: /root/firewall_automation/
+      datacontainer: 
+        ssl: 
+          mountPath: /root/firewall_automation/ssl
+        hosts_file: 
+          mountPath: /root/firewall_automation/deploy/hosts
+          subPath: hosts
+        configuration_yaml: 
+          mountPath: /root/firewall_automation/configuration.yaml
+          subPath: configuration.yaml
+        shared_data: 
+          mountPath: /data
+  grafana: 
+    grafana_defaults_ini: 
+      mountPath: /usr/share/grafana/conf/defaults.ini
+      subPath: defaults.ini
+  uop: 
+    uop_config: 
+      mountPath: /root/UOP-bgp-opt-portal/django/matrix_bgp/settings/uop.py
+      subPath: uop.py
+    shared_data: 
+      mountPath: /root/UOP-bgp-opt-portal
+    ssl: 
+      mountPath: /root/UOP-bgp-opt-portal/django/ssl
+    datacontainer:
+      shared_data:
+        mountPath: /data
+
+
+hostAliases: 
+# celery
+  uop_pg: "10.255.11.59"
+  redis: "10.255.11.62"
+# grafana
+  grafana_pg: "10.255.11.59"
+# uop
+  uop_pg: "10.255.11.59"

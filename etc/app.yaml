@@ -1,0 +1,19 @@
+nso_server:
+    NSO_PROTOCOL: https
+    NSO_HOST: "172.20.237.102"
+    NSO_PORT: "8888"
+    NSO_USER: "usr_nso"
+    NSO_PASSWORD: "3f81fa911d1c4dcaec82707a2aefb417"
+    #NSO_ORIGIN_PW: "T3mp@123"
+    #NSO_FIREWALL_API_PORT: "8888"
+
+
+kafka_producer:
+    security_protocol: SSL
+    ssl_check_hostname: False
+    ssl_cafile: /root/kafka_ssl/CARoot.pem
+    ssl_certfile: /root/kafka_ssl/certificate.pem
+    ssl_keyfile: /root/kafka_ssl/key.pem
+    acks: 1
+
+kafka_bootstrap_servers: meyclvspiapp01:9093,meyclvspiapp02:9093,meyclvspiapp03:9093

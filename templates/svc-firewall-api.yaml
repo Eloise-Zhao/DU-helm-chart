@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: firewall-api-service
+spec:
+  selector:
+    app: firewall-api
+    release: stable
+  clusterIP: {{ .Values.service.firewall.api.clusterIP }}
+  ports:
+  - port: {{ .Values.service.firewall.api.port }}
+    targetPort: 8000
+    nodePort: {{ .Values.service.firewall.api.nodePort }}
+    protocol: TCP
+  type: {{ .Values.service.firewall.api.type }}

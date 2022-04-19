@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+spec:
+  replicas: {{ .Values.replicaCount.grafana }}
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+      - name: grafana
+        image: "{{ .Values.image.grafana.repository }}:{{ .Values.image.grafana.tag | default "latest" }}"
+        imagePullPolicy: {{ .Values.image.grafana.pullPolicy }}
+        volumeMounts:
+          - name: grafana-defaults-ini
+            mountPath: {{ .Values.Mounts.grafana.grafana_defaults_ini.mountPath }}
+            subPath: {{ .Values.Mounts.grafana.grafana_defaults_ini.subPath }}
+      volumes:
+        - name: grafana-defaults-ini
+          configMap:
+            name: grafana-defaults-ini
+            items:
+              - key: defaults.ini
+                path: defaults.ini
+      hostAliases:
+      - ip: {{ .Values.hostAliases.grafana_pg | quote }}
+        hostnames:
+        - "grafana-pg"

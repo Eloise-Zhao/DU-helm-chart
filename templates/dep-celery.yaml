@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: celery
+spec:
+  replicas: {{ .Values.replicaCount.celery }}
+  selector: 
+    matchLabels:
+      app: celery
+  template:
+    metadata:
+      labels:
+        app: celery
+    spec:
+      containers:
+      - name: celery
+        image: "{{ .Values.image.celery.repository }}:{{ .Values.image.celery.tag | default "latest" }}"
+        imagePullPolicy: {{ .Values.image.celery.pullPolicy }}
+        command: [ "/bin/sh", "-c", "/root/UOP-bgp-opt-portal/django/scriptRun" ]
+        env:
+      {{- range .Values.env.celery }}
+        {{- with . }}
+        - name: {{ .name }}
+          value: {{ .value }}
+        {{- end}}
+      {{- end}}
+        volumeMounts:
+        - name: uop-config
+          mountPath: {{ .Values.Mounts.celery.uop_config.mountPath }}
+          subPath: {{ .Values.Mounts.celery.uop_config.subPath }}
+        - name: shared-data
+          mountPath: {{ .Values.Mounts.celery.shared_data.mountPath }}
+        - name: ssl
+          mountPath: {{ .Values.Mounts.celery.ssl.mountPath }}
+      volumes:
+      - name: uop-config
+        configMap:
+          name: uop-config
+          items:
+            - key: uop.py
+              path: uop.py
+      - name: shared-data
+        emptyDir: {}
+      - name: ssl
+        hostPath:
+          path: /opt/uop/ssl
+      hostAliases:
+      - ip: {{ .Values.hostAliases.uop_pg | quote }}
+        hostnames:
+        - "uop-pg"
+      - ip: {{ .Values.hostAliases.redis | quote }}
+        hostnames:
+        - "redis"
+      initContainers:
+      - name: datacontainer
+        image: "{{ .Values.image.celery.datacontainer.repository }}:{{ .Values.image.celery.datacontainer.tag | default "latest" }}"
+        imagePullPolicy: {{ .Values.image.celery.datacontainer.pullPolicy }}
+        command: [sh, -c]
+        args: ["cp -rp /src/* /data"]
+        volumeMounts:
+        - name: shared-data
+          mountPath: {{ .Values.Mounts.celery.datacontainer.shared_data.mountPath }}

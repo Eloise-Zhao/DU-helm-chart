@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+    name: firewall-api-configmap
+data: 
+{{- range $key, $value := .Values.env.firewall }}
+    {{ $key }}: {{ $value | quote }}
+{{- end }}
+{{ (.Files.Glob "etc/app.yaml").AsConfig | indent 4 }}

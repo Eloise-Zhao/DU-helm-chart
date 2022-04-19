@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: firewall-api
+spec:
+  replicas: {{ .Values.replicaCount.firewall_api }}
+  selector:
+    matchLabels:
+      app: firewall-api
+      release: stable
+  template:
+    metadata:
+      labels:
+        app: firewall-api
+        release: stable
+    spec:
+    {{- if .Values.nodeSelector.firewall.api }}
+      nodeSelector:
+        kubernetes.io/hostname: {{ .Values.nodeSelector.firewall.api }}
+    {{- end }}
+      containers:
+      - name: firewall-api-container
+        image: "{{ .Values.image.firewall.api.repository }}:{{ .Values.image.firewall.api.tag | default "latest" }}"
+        imagePullPolicy: {{ .Values.image.firewall.api.pullPolicy }}
+        env:
+        - name: MY_NODE_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+      {{- range $key, $value := .Values.env.firewall }}
+        - name: {{ $key }}
+          valueFrom:
+            configMapKeyRef:
+              name: firewall-api-configmap
+              key: {{ $key }}
+      {{- end }}
+        ports:
+        - name: port8000
+          containerPort: 8000
+        volumeMounts:
+        - name: ssl
+          mountPath: {{ .Values.Mounts.firewall.api.ssl.mountPath }}
+        - name: unilog
+          mountPath: {{ .Values.Mounts.firewall.api.unilog.mountPath }}
+        - name: app-yaml-file
+          mountPath: {{ .Values.Mounts.firewall.api.app_yaml_file.mountPath }}
+          subPath: {{ .Values.Mounts.firewall.api.app_yaml_file.subPath }}
+        - name: hosts-file
+          mountPath: {{ .Values.Mounts.firewall.api.hosts_file.mountPath }}
+          subPath: {{ .Values.Mounts.firewall.api.hosts_file.subPath }}
+        - name: shared-data
+          mountPath: {{ .Values.Mounts.firewall.api.shared_data.mountPath }}
+      volumes:
+      - name: ssl
+        hostPath:
+          path: /opt/fwa/ssl/
+          type: Directory
+      - name: unilog
+        hostPath:
+          path: /opt/fwa/logs/firewall-api/
+          type: Directory
+      - name: hosts-file
+        configMap:
+          name: hosts-file-configmap
+          items:
+            - key: hosts
+              path: hosts
+      - name: app-yaml-file
+        configMap:
+          name: firewall-api-configmap
+          items: 
+            - key: app.yaml
+              path: app.yaml
+      - name: shared-data
+        emptyDir: {}
+      initContainers:
+      - name: datacontainer
+        image: "{{ .Values.image.firewall.api.datacontainer.repository }}:{{ .Values.image.firewall.api.datacontainer.tag | default "latest" }}"
+        imagePullPolicy: IfNotPresent
+        command: [sh, -c]
+        args: ["cp -rp /root/firewall-automation/* /data"]
+        volumeMounts:
+        - name: shared-data
+          mountPath: {{ .Values.Mounts.firewall.api.datacontainer.shared_data.mountPath }}

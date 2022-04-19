@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: firewall-ui-frontend
+spec:
+  selector:
+    matchLabels:
+      app: firewall-ui-frontend
+      release: stable
+  template:
+    metadata:
+      labels:
+        app: firewall-ui-frontend
+        release: stable
+    spec:
+      containers:
+      - name: firewall-ui-frontend-container
+        env:
+      {{- range .Values.env.firewall_frontend }}
+        {{- with . }}
+        - name: {{ .name }}
+          value: {{ .value | quote }}
+        {{- end}}
+      {{- end}}
+        image: "{{ .Values.image.firewall.frontend.repository }}:{{ .Values.image.firewall.frontend.tag | default "latest" }}"
+        imagePullPolicy: {{ .Values.image.firewall.frontend.pullPolicy }}
+        ports:
+        - name: port80
+          containerPort: 80
