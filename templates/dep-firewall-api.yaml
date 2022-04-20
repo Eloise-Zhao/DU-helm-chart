@@ -48,12 +48,14 @@ spec:
         - name: hosts-file
           mountPath: {{ .Values.Mounts.firewall.api.hosts_file.mountPath }}
           subPath: {{ .Values.Mounts.firewall.api.hosts_file.subPath }}
+      {{- if .Values.shared_data.enabled.firewall_api }}
         - name: shared-data
           mountPath: {{ .Values.Mounts.firewall.api.shared_data.mountPath }}
+      {{- end}}
       volumes:
       - name: ssl
         hostPath:
-          path: /opt/fwa/ssl/
+          path: {{ .Values.hostPath.ssl.firewall }}
           type: Directory
       - name: unilog
         hostPath:
@@ -71,8 +73,10 @@ spec:
           items: 
             - key: app.yaml
               path: app.yaml
+    {{- if .Values.shared_data.enabled.firewall_api }}
       - name: shared-data
         emptyDir: {}
+    {{- end}}
       initContainers:
       - name: datacontainer
         image: "{{ .Values.image.firewall.api.datacontainer.repository }}:{{ .Values.image.firewall.api.datacontainer.tag | default "latest" }}"

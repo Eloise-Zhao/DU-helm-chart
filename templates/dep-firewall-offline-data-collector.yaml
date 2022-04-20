@@ -24,9 +24,11 @@ spec:
         imagePullPolicy: {{ .Values.image.firewall.collector.pullPolicy }}
         command: ["sh","/root/firewall_automation/deploy/entrypoint.sh"]
         volumeMounts:
+      {{- if .Values.shared_data.enabled.firewall_collector }}
         - name: shared-data
           mountPath: {{ .Values.Mounts.firewall.collector.shared_data.mountPath }}
           readOnly: false
+      {{- end}}
       volumes:
       - name: hosts-file
         configMap:
@@ -42,9 +44,11 @@ spec:
             path: configuration.yaml
       - name: ssl
         hostPath:
-          path: /opt/fwa/ssl
+          path: {{ .Values.hostPath.ssl.firewall }}
+    {{- if .Values.shared_data.enabled.firewall_collector }}
       - name: shared-data
         emptyDir: {}
+    {{- end}}
       initContainers:
       - name: datacontainer
         image: "{{ .Values.image.firewall.collector.datacontainer.repository }}:{{ .Values.image.firewall.collector.datacontainer.tag | default "latest" }}"

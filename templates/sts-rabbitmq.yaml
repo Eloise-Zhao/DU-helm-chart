@@ -52,7 +52,14 @@ spec:
           value: {{ .value | quote }}
         {{- end}}
       {{- end}}
-
         ports:
         - containerPort: 5672
           name: amqp
+      {{- if .Values.shared_data.enabled.rabbitmq }}
+        volumes: 
+        - name: shared-data
+          emptyDir: {}
+        volumeMounts: 
+        - name: shared-data
+          mountPath: {{ .Values.Mounts.rabbitmq.shared_data.mountPath }}
+      {{- end}}

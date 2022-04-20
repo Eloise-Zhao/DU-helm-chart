@@ -20,6 +20,10 @@ spec:
           - name: grafana-defaults-ini
             mountPath: {{ .Values.Mounts.grafana.grafana_defaults_ini.mountPath }}
             subPath: {{ .Values.Mounts.grafana.grafana_defaults_ini.subPath }}
+        {{- if .Values.shared_data.enabled.grafana }}
+          - name: shared-data
+            mountPath: {{ .Values.Mounts.grafana.shared_data.mountPath }}
+        {{- end}}
       volumes:
         - name: grafana-defaults-ini
           configMap:
@@ -27,6 +31,10 @@ spec:
             items:
               - key: defaults.ini
                 path: defaults.ini
+      {{- if .Values.shared_data.enabled.grafana }}
+        - name: shared-data
+          emptyDir: {}
+      {{- end}}
       hostAliases:
       - ip: {{ .Values.hostAliases.grafana_pg | quote }}
         hostnames:

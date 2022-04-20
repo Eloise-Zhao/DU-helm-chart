@@ -186,6 +186,8 @@ Mounts:
     grafana_defaults_ini: 
       mountPath: /usr/share/grafana/conf/defaults.ini
       subPath: defaults.ini
+    shared_data: 
+      mountPath: ""
   uop: 
     uop_config: 
       mountPath: /root/UOP-bgp-opt-portal/django/matrix_bgp/settings/uop.py
@@ -197,6 +199,26 @@ Mounts:
     datacontainer:
       shared_data:
         mountPath: /data
+  rabbitmq: 
+    shared_data:
+      mountPath: ""
+
+
+hostPath: 
+  ssl: 
+    uop: /opt/uop/ssl
+    firewall: /opt/fwa/ssl
+
+
+shared_data: 
+  enabled: 
+    uop: true
+    firewall_api: true
+    firewall_collector: true
+#    firewall_frontend: false
+    celery: true
+    rabbitmq: false
+    grafana: false
 
 
 hostAliases: 

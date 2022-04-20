@@ -29,8 +29,10 @@ spec:
         - name: uop-config
           mountPath: {{ .Values.Mounts.uop.uop_config.mountPath }}
           subPath: {{ .Values.Mounts.uop.uop_config.subPath }}
+      {{- if .Values.shared_data.enabled.uop }}
         - name: shared-data
           mountPath: {{ .Values.Mounts.uop.shared_data.mountPath }}
+      {{- end}}
         - name: ssl
           mountPath: {{ .Values.Mounts.uop.ssl.mountPath }}
       volumes:
@@ -40,11 +42,13 @@ spec:
           items:
             - key: uop.py
               path: uop.py
+    {{- if .Values.shared_data.enabled.uop }}
       - name: shared-data
         emptyDir: {}
+    {{- end}}
       - name: ssl
         hostPath:
-          path: /opt/uop/ssl
+          path: {{ .Values.hostPath.ssl.uop }}
       hostAliases:
       - ip: {{ .Values.hostAliases.uop_pg | quote }}
         hostnames:
